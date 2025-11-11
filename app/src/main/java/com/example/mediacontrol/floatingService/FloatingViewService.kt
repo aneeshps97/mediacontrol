@@ -26,6 +26,7 @@ class FloatingViewService : Service() {
     private var windowManager: WindowManager? = null
     private var volumeUpView: View? = null
     private var volumeDownView: View? = null
+    private var muteView: View? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -33,18 +34,40 @@ class FloatingViewService : Service() {
         super.onCreate()
         startForegroundServiceSafe()
 
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-
         // Inflate views
-        volumeUpView = LayoutInflater.from(this).inflate(R.layout.volume_up_button, null)
-        volumeDownView = LayoutInflater.from(this).inflate(R.layout.volume_down_button, null)
+        volumeUpView = inflateViews(R.layout.volume_up_button)
+        volumeDownView = inflateViews(R.layout.volume_down_button)
+        muteView = inflateViews(R.layout.mute_button)
 
+
+        // Add views based on saved visibility
+        if (prefs.getBoolean("VOLUME_UP", false)) {
+            addButtonsToScreen(0,200,volumeUpView,R.id.volumeUp)
+        }
+
+        if (prefs.getBoolean("VOLUME_DOWN", false)) {
+            addButtonsToScreen(0,500,volumeDownView,R.id.volumeDown)
+        }
+
+        if(prefs.getBoolean("MUTE", false)){
+            addButtonsToScreen(0, 800, muteView, R.id.mute)
+        }
+
+    }
+
+    private fun inflateViews(resource: Int): View {
+        return LayoutInflater.from(this).inflate(resource, null)
+    }
+
+
+    private fun addButtonsToScreen(positionX:Int, positionY: Int, item:View?, id:Int){
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         else
             WindowManager.LayoutParams.TYPE_PHONE
 
-        val paramsUp = WindowManager.LayoutParams(
+        val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
@@ -52,34 +75,12 @@ class FloatingViewService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.LEFT
-            x = 0
-            y = 200
+            x = positionX
+            y = positionY
         }
 
-        val paramsDown = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            layoutFlag,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.LEFT
-            x = 0
-            y = 500
-        }
-
-        // Add views based on saved visibility
-        if (prefs.getBoolean("VOLUME_UP", false)) {
-            windowManager?.addView(volumeUpView, paramsUp)
-        }
-
-        if (prefs.getBoolean("VOLUME_DOWN", false)) {
-            windowManager?.addView(volumeDownView, paramsDown)
-        }
-
-        // Touch & click handling
-        clickAction(volumeUpView!!, R.id.volumeUp, paramsUp)
-        clickAction(volumeDownView!!, R.id.volumeDown, paramsDown)
+        windowManager?.addView(item, params)
+        clickAction(item!!, id, params)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -90,24 +91,7 @@ class FloatingViewService : Service() {
                 "VOLUME_UP" -> {
                     if (value) {
                         if (volumeUpView?.isAttachedToWindow == false) {
-                            val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                            else
-                                WindowManager.LayoutParams.TYPE_PHONE
-
-                            val paramsUp = WindowManager.LayoutParams(
-                                WindowManager.LayoutParams.WRAP_CONTENT,
-                                WindowManager.LayoutParams.WRAP_CONTENT,
-                                layoutFlag,
-                                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                                PixelFormat.TRANSLUCENT
-                            ).apply {
-                                gravity = Gravity.TOP or Gravity.LEFT
-                                x = 0
-                                y = 200
-                            }
-
-                            windowManager?.addView(volumeUpView, paramsUp)
+                            addButtonsToScreen(0,200,volumeUpView,R.id.volumeUp)
                         }
                     } else {
                         if (volumeUpView?.isAttachedToWindow == true) {
@@ -119,28 +103,23 @@ class FloatingViewService : Service() {
                 "VOLUME_DOWN" -> {
                     if (value) {
                         if (volumeDownView?.isAttachedToWindow == false) {
-                            val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                            else
-                                WindowManager.LayoutParams.TYPE_PHONE
-
-                            val paramsDown = WindowManager.LayoutParams(
-                                WindowManager.LayoutParams.WRAP_CONTENT,
-                                WindowManager.LayoutParams.WRAP_CONTENT,
-                                layoutFlag,
-                                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                                PixelFormat.TRANSLUCENT
-                            ).apply {
-                                gravity = Gravity.TOP or Gravity.LEFT
-                                x = 0
-                                y = 500
-                            }
-
-                            windowManager?.addView(volumeDownView, paramsDown)
+                            addButtonsToScreen(0,500,volumeDownView,R.id.volumeDown)
                         }
                     } else {
                         if (volumeDownView?.isAttachedToWindow == true) {
                             windowManager?.removeView(volumeDownView)
+                        }
+                    }
+                }
+
+                "MUTE" -> {
+                    if (value) {
+                        if (muteView?.isAttachedToWindow == false) {
+                            addButtonsToScreen(0,800,muteView,R.id.mute)
+                        }
+                    } else {
+                        if (muteView?.isAttachedToWindow == true) {
+                            windowManager?.removeView(muteView)
                         }
                     }
                 }
@@ -155,6 +134,7 @@ class FloatingViewService : Service() {
         try {
             if (volumeUpView?.isAttachedToWindow == true) windowManager?.removeView(volumeUpView)
             if (volumeDownView?.isAttachedToWindow == true) windowManager?.removeView(volumeDownView)
+            if (muteView?.isAttachedToWindow == true) windowManager?.removeView(muteView)
         } catch (_: Exception) {
         }
     }
@@ -182,16 +162,24 @@ class FloatingViewService : Service() {
                         val xDiff = (event.rawX - initialTouchX).toInt()
                         val yDiff = (event.rawY - initialTouchY).toInt()
                         if (xDiff < 10 && yDiff < 10) {
-                            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                            val audioManager =
+                                getSystemService(Context.AUDIO_SERVICE) as AudioManager
                             when (id) {
                                 R.id.volumeUp -> audioManager.adjustStreamVolume(
                                     AudioManager.STREAM_MUSIC,
                                     AudioManager.ADJUST_RAISE,
                                     AudioManager.FLAG_SHOW_UI
                                 )
+
                                 R.id.volumeDown -> audioManager.adjustStreamVolume(
                                     AudioManager.STREAM_MUSIC,
                                     AudioManager.ADJUST_LOWER,
+                                    AudioManager.FLAG_SHOW_UI
+                                )
+
+                                R.id.mute -> audioManager.adjustStreamVolume(
+                                    AudioManager.STREAM_MUSIC,
+                                    AudioManager.ADJUST_MUTE,
                                     AudioManager.FLAG_SHOW_UI
                                 )
                             }
