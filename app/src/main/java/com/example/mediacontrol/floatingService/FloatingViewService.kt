@@ -13,44 +13,59 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.example.mediacontrol.R
+import com.example.mediacontrol.kotlin.mainClasses.ButtonInfo
+import com.example.mediacontrol.kotlin.mainClasses.ButtonViews
+import com.example.mediacontrol.kotlin.mainClasses.Constants
 
 class FloatingViewService : Service() {
 
     private val prefs by lazy { getSharedPreferences("BUTTONS_VISIBLE", Context.MODE_PRIVATE) }
     private var windowManager: WindowManager? = null
-    private var volumeUpView: View? = null
-    private var volumeDownView: View? = null
-    private var muteView: View? = null
-
+    private val buttonViews: ButtonViews = ButtonViews()
     override fun onBind(intent: Intent?): IBinder? = null
+    private lateinit var buttons: List<ButtonInfo>
+
 
     override fun onCreate() {
         super.onCreate()
         startForegroundServiceSafe()
 
         // Inflate views
-        volumeUpView = inflateViews(R.layout.volume_up_button)
-        volumeDownView = inflateViews(R.layout.volume_down_button)
-        muteView = inflateViews(R.layout.mute_button)
+        buttonViews.volumeUpView = inflateViews(R.layout.volume_up_button)
+        buttonViews.volumeDownView = inflateViews(R.layout.volume_down_button)
+        buttonViews.muteView = inflateViews(R.layout.mute_button)
+        buttonViews.playView = inflateViews(R.layout.play_button)
+        buttonViews.pauseView = inflateViews(R.layout.pause_button)
+        buttonViews.previousView = inflateViews(R.layout.previous_button)
+        buttonViews.nextView = inflateViews(R.layout.next_button)
+        buttonViews.fastForwardView = inflateViews(R.layout.fastfoward_button)
+        buttonViews.rewindView = inflateViews(R.layout.rewind_button)
 
+        //finding the size of each buttons
 
-        // Add views based on saved visibility
-        if (prefs.getBoolean("VOLUME_UP", false)) {
-            addButtonsToScreen(0,200,volumeUpView,R.id.volumeUp)
-        }
+        buttons = listOf(
+            ButtonInfo(Constants.VOLUME_UP, buttonViews.volumeUpView, R.id.volumeUp, 0, 200),
+            ButtonInfo(Constants.VOLUME_DOWN, buttonViews.volumeDownView, R.id.volumeDown, 0, 500),
+            ButtonInfo(Constants.MUTE, buttonViews.muteView, R.id.mute, 0, 800),
+            ButtonInfo(Constants.PLAY, buttonViews.playView, R.id.play, 0, 1000),
+            ButtonInfo(Constants.PAUSE, buttonViews.pauseView, R.id.pause, 0, 1200),
+            ButtonInfo(Constants.PREVIOUS, buttonViews.previousView, R.id.previous, 0, 1400),
+            ButtonInfo(Constants.NEXT, buttonViews.nextView, R.id.next, 0, 1600),
+            ButtonInfo(Constants.FAST_FORWARD, buttonViews.fastForwardView, R.id.fastforward, 0, 1800),
+            ButtonInfo(Constants.REWIND, buttonViews.rewindView, R.id.rewind, 0, 2000)
+        )
 
-        if (prefs.getBoolean("VOLUME_DOWN", false)) {
-            addButtonsToScreen(0,500,volumeDownView,R.id.volumeDown)
-        }
-
-        if(prefs.getBoolean("MUTE", false)){
-            addButtonsToScreen(0, 800, muteView, R.id.mute)
+        buttons.forEach { button ->
+            if (prefs.getBoolean(button.key, false)) {
+                addButtonsToScreen(button.x, button.y, button.view, button.viewId,button.key)
+            }
         }
 
     }
@@ -60,7 +75,8 @@ class FloatingViewService : Service() {
     }
 
 
-    private fun addButtonsToScreen(positionX:Int, positionY: Int, item:View?, id:Int){
+    private fun addButtonsToScreen(positionX: Int, positionY: Int, item: View?, id: Int,key:String) {
+        val (height, width,opacity) = findHeightWidthOpacityOfButton(key)
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -68,8 +84,8 @@ class FloatingViewService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
 
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            width.toInt()*3,   // width in pixels
+            height.toInt()*3,  // height in pixels
             layoutFlag,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -77,53 +93,40 @@ class FloatingViewService : Service() {
             gravity = Gravity.TOP or Gravity.LEFT
             x = positionX
             y = positionY
+            alpha = opacity   // control opacity here
         }
 
         windowManager?.addView(item, params)
         clickAction(item!!, id, params)
     }
 
+    private fun findHeightWidthOpacityOfButton(key:String): Triple<Float, Float,Float> {
+        val pref by lazy { getSharedPreferences(key, Context.MODE_PRIVATE) }
+        val height = pref.getFloat("HEIGHT",90F)
+        val width = pref.getFloat("WIDTH",90F)
+        val opacity = pref.getFloat("OPACITY",0.5F)
+        return Triple(height, width,opacity)
+    }
+
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.extras?.keySet()?.forEach { key ->
             val value = intent.extras?.getBoolean(key, false) ?: false
 
-            when (key) {
-                "VOLUME_UP" -> {
+            buttons.find { it.key == key }?.let { button ->
+                button.view?.let { view ->
                     if (value) {
-                        if (volumeUpView?.isAttachedToWindow == false) {
-                            addButtonsToScreen(0,200,volumeUpView,R.id.volumeUp)
+                        if (view.isAttachedToWindow.not()) {
+                            addButtonsToScreen(button.x, button.y, view, button.viewId,button.key)
                         }
                     } else {
-                        if (volumeUpView?.isAttachedToWindow == true) {
-                            windowManager?.removeView(volumeUpView)
-                        }
-                    }
-                }
-
-                "VOLUME_DOWN" -> {
-                    if (value) {
-                        if (volumeDownView?.isAttachedToWindow == false) {
-                            addButtonsToScreen(0,500,volumeDownView,R.id.volumeDown)
-                        }
-                    } else {
-                        if (volumeDownView?.isAttachedToWindow == true) {
-                            windowManager?.removeView(volumeDownView)
-                        }
-                    }
-                }
-
-                "MUTE" -> {
-                    if (value) {
-                        if (muteView?.isAttachedToWindow == false) {
-                            addButtonsToScreen(0,800,muteView,R.id.mute)
-                        }
-                    } else {
-                        if (muteView?.isAttachedToWindow == true) {
-                            windowManager?.removeView(muteView)
+                        if (view.isAttachedToWindow) {
+                            windowManager?.removeView(view)
                         }
                     }
                 }
             }
+
         }
 
         return START_STICKY
@@ -132,9 +135,9 @@ class FloatingViewService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         try {
-            if (volumeUpView?.isAttachedToWindow == true) windowManager?.removeView(volumeUpView)
-            if (volumeDownView?.isAttachedToWindow == true) windowManager?.removeView(volumeDownView)
-            if (muteView?.isAttachedToWindow == true) windowManager?.removeView(muteView)
+            buttonViews.allViews().forEach { view ->
+                if (view?.isAttachedToWindow == true) windowManager?.removeView(view)
+            }
         } catch (_: Exception) {
         }
     }
@@ -182,6 +185,57 @@ class FloatingViewService : Service() {
                                     AudioManager.ADJUST_MUTE,
                                     AudioManager.FLAG_SHOW_UI
                                 )
+
+                                R.id.play -> {
+
+                                    // Poweramp play
+                                    /*val playIntent = Intent("com.maxmpz.audioplayer.API_COMMAND")
+                                    playIntent.setPackage("com.maxmpz.audioplayer")
+                                    playIntent.putExtra("cmd", 1) // 1 = Play
+                                    playIntent.putExtra("api", 2) // API version
+                                    v?.context?.sendBroadcast(playIntent)*/
+                                    val event =
+                                        KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY)
+                                    audioManager.dispatchMediaKeyEvent(event)
+                                }
+
+                                R.id.pause -> {
+                                    //poweramp pause
+                                    val intent = Intent("com.maxmpz.audioplayer.API_COMMAND")
+                                    intent.setPackage("com.maxmpz.audioplayer")
+                                    intent.putExtra("cmd", 2) // Pause
+                                    intent.putExtra("api", 2) // API version
+                                    v?.context?.sendBroadcast(intent)
+
+                                    val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
+                                    audioManager.dispatchMediaKeyEvent(event)
+                                }
+
+                                R.id.previous -> {
+                                    val downEvent = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+                                    val upEvent = KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+                                    audioManager.dispatchMediaKeyEvent(downEvent)
+                                    audioManager.dispatchMediaKeyEvent(upEvent)
+                                }
+
+
+                                R.id.next -> {
+                                    val downEvent = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_NEXT)
+                                    val upEvent = KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_NEXT)
+                                    audioManager.dispatchMediaKeyEvent(downEvent)
+                                    audioManager.dispatchMediaKeyEvent(upEvent)
+                                }
+
+
+                                R.id.rewind -> {
+                                    val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_REWIND)
+                                    audioManager.dispatchMediaKeyEvent(event)
+                                }
+
+                                R.id.fastforward -> {
+                                    val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD)
+                                    audioManager.dispatchMediaKeyEvent(event)
+                                }
                             }
                         }
                         return true
@@ -199,6 +253,7 @@ class FloatingViewService : Service() {
         })
     }
 
+    @SuppressLint("ForegroundServiceType")
     private fun startForegroundServiceSafe() {
         val channelId = "com.example.mediacontrol.overlay"
         val channelName = "Floating Overlay Service"

@@ -3,7 +3,7 @@
     android:layout_height="wrap_content">
 
     <RelativeLayout
-        android:id="@+id/volumeDown"
+        android:id="@+id/next"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
@@ -15,7 +15,6 @@
             android:visibility="visible">
 
             <RelativeLayout
-                android:id="@+id/button_container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="10dp"
@@ -26,11 +25,10 @@
                     android:id="@+id/volume_icon"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/ic_volume_down"
+                    android:src="@drawable/ic_media_next"
                     android:scaleType="fitCenter" />
 
             </RelativeLayout>
-
         </RelativeLayout>
     </RelativeLayout>
 </FrameLayout>
