@@ -2,21 +2,20 @@
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="#000000">
+    android:viewportHeight="24">
 
-    <!-- Speaker -->
+    <!-- Shadow (very close offset) -->
     <path
-        android:fillColor="@android:color/black"
-        android:pathData="M7,9v6h4l5,5V4l-5,5H7z" />
+        android:fillColor="#33000000"
+        android:pathData="M6.5,9.5v6h4l5,5V4.5l-5,5H6.5z
+                          M18,12.5c0-1.77-1.02-3.29-2.5-4.03v8.05C16.98,15.79 18,14.27 18,12.5z
+                          M20.5,12.5c0,2.5-1.5,4.71-3.5,5.65v-1.86c1.2-0.8 2-2.12 2-3.79s-0.8-2.99-2-3.79V6.85C19,7.79 20.5,10 20.5,12.5z" />
 
-    <!-- Inner wave (moved further right) -->
+    <!-- Main icon -->
     <path
-        android:fillColor="@android:color/black"
-        android:pathData="M18.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C17.48,15.29 18.5,13.77 18.5,12z" />
+        android:fillColor="#546E7A"
+        android:pathData="M6,9v6h4l5,5V4l-5,5H6z
+                          M17.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C16.48,15.29 17.5,13.77 17.5,12z
+                          M20,12c0,2.5-1.5,4.71-3.5,5.65v-1.86c1.2-0.8 2-2.12 2-3.79s-0.8-2.99-2-3.79V6.35C18.5,7.29 20,9.5 20,12z" />
 
-    <!-- Outer wave (moved further right) -->
-    <path
-        android:fillColor="@android:color/black"
-        android:pathData="M21,12c0,2.5-1.5,4.71-3.5,5.65v-1.86c1.2-0.8 2-2.12 2-3.79s-0.8-2.99-2-3.79V6.35C19.5,7.29 21,9.5 21,12z" />
 </vector>

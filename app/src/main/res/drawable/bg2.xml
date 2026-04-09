@@ -1,24 +1,28 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
 
-    <!-- Gradient gives depth -->
+    <!-- 50% opacity base -->
+    <solid android:color="#80FFFFFF" />
+
+    <!-- Matching gradient (~50% range) -->
     <gradient
-        android:startColor="#F5F5F5"
-        android:endColor="#E0E0E0"
+        android:startColor="#80FFFFFF"
+        android:endColor="#40FFFFFF"
         android:angle="270" />
 
     <!-- Rounded corners -->
     <corners android:radius="16dp" />
 
-    <!-- Thin border -->
+    <!-- Balanced border -->
     <stroke
         android:width="1dp"
-        android:color="#BDBDBD" />
+        android:color="#80FFFFFF" />
 
-    <!-- Slight padding for icon breathing space -->
+    <!-- Padding -->
     <padding
         android:left="6dp"
         android:top="6dp"
         android:right="6dp"
         android:bottom="6dp" />
+
 </shape>

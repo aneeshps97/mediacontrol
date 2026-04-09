@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun PageBackground(
+    contentModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
     backgroundColor: Color=Color.White, // Dark gray as default
     content: @Composable ColumnScope.() -> Unit
@@ -46,6 +47,7 @@ fun PageBackground(
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = contentModifier,
                 content = content
             )
         }

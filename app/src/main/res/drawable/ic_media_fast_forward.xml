@@ -2,10 +2,18 @@
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="#000000">
+    android:viewportHeight="24">
 
+    <!-- Shadow (closer + softer) -->
     <path
-        android:fillColor="@android:color/white"
-        android:pathData="M4,18l8.5,-6L4,6v12zM12,18l8.5,-6L12,6v12z" />
+        android:fillColor="#33000000"
+        android:pathData="M4.5,18.5l8.5,-6L4.5,6.5v12z
+                          M12.5,18.5l8.5,-6L12.5,6.5v12z" />
+
+    <!-- Main icon -->
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M4,18l8.5,-6L4,6v12z
+                          M12,18l8.5,-6L12,6v12z" />
+
 </vector>

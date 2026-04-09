@@ -2,14 +2,18 @@
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="#000000">
+    android:viewportHeight="24">
 
+    <!-- Shadow (close + subtle) -->
     <path
-        android:fillColor="@android:color/white"
-        android:pathData="M7,9v6h4l5,5V4l-5,5H7z" />
+        android:fillColor="#33000000"
+        android:pathData="M7.5,9.5v6h4l5,5V4.5l-5,5H7.5z
+                          M17,12.5l3.5,3.5l-1.5,1.5L15.5,14l-3.5,3.5l-1.5,-1.5L14,12.5l-3.5,-3.5l1.5,-1.5L15.5,11l3.5,-3.5l1.5,1.5L17,12.5z" />
+
+    <!-- Main icon -->
     <path
-        android:fillColor="@android:color/white"
-        android:pathData="M16.5,12l3.5,3.5l-1.5,1.5L15,13.5l-3.5,3.5l-1.5,-1.5L13.5,12l-3.5,-3.5l1.5,-1.5L15,10.5l3.5,-3.5l1.5,1.5L16.5,12z" />
+        android:fillColor="#546E7A"
+        android:pathData="M7,9v6h4l5,5V4l-5,5H7z
+                          M16.5,12l3.5,3.5l-1.5,1.5L15,13.5l-3.5,3.5l-1.5,-1.5L13.5,12l-3.5,-3.5l1.5,-1.5L15,10.5l3.5,-3.5l1.5,1.5L16.5,12z" />
+
 </vector>
-
